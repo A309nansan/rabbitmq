@@ -1,5 +1,9 @@
 #!/bin/bash
-set -euo pipefail  # 명령어 실패 시 스크립트 종료
+
+# 이 파일은 Jenkins에서 Execute Shell에 작성한 script 내용입니다.
+
+# 명령어 실패 시 스크립트 종료
+set -euo pipefail
 
 # 로그 출력 함수
 log() {
@@ -16,25 +20,29 @@ trap 'error $LINENO' ERR
 
 log "스크립트 실행 시작."
 
-# docker network 생성 (이미 존재하면 스킵)
+# docker network 생성
 if docker network ls --format '{{.Name}}' | grep -q '^nansan-network$'; then
-  log "Docker network 'nansan-network'가 이미 존재합니다. 생성 스킵."
+  log "Docker network named 'nansan-network' is already existed."
 else
-  log "Docker network 'nansan-network' 생성 중."
+  log "Docker network named 'nansan-network' is creating..."
   docker network create --driver bridge nansan-network
 fi
 
-# rabbitmq 이미지 빌드
-log "rabbitmq 이미지 빌드 시작."
+# 기존 rabbitmq 이미지를 삭제하고 새로 빌드
+log "rabbitmq image remove and build."
+docker rmi rabbitmq:latest || true
 docker build -t rabbitmq:latest .
 
-# rabbitmq 작업 공간을 mount할 폴더 미리 생성
-log "rabbitmq의 volume을 mount할 Host Machine에 /var/rabbitmq 만드는중..."
-sudo mkdir -p /var/rabbitmq
-sudo chown -R 1000:1000 /var/rabbitmq
-
-# Docker Compose로 서비스 실행
-log "Docker Compose로 서비스 실행 중..."
-docker compose up -d
+# Docker로 rabbitmq 서비스 실행
+log "Execute rabbitmq..."
+docker run -d \
+  --name rabbitmq \
+  --restart unless-stopped \
+  -e RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER} \
+  -e RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS} \
+  -p 15672:15672 \
+  -v /var/rabbitmq:/var/lib/rabbitmq \
+  --network nansan-network \
+  rabbitmq:latest
 
 echo "작업이 완료되었습니다."
