@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# 이 파일은 Jenkins에서 Execute Shell에 작성한 script 내용입니다.
-
 # 명령어 실패 시 스크립트 종료
 set -euo pipefail
 
@@ -28,6 +26,10 @@ else
   docker network create --driver bridge nansan-network
 fi
 
+# 실행중인 rabbitmq container 삭제
+log "rabbitmq container remove."
+docker rm -f rabbitmq:latest
+
 # 기존 rabbitmq 이미지를 삭제하고 새로 빌드
 log "rabbitmq image remove and build."
 docker rmi rabbitmq:latest || true
@@ -43,7 +45,7 @@ TOKEN_RESPONSES=$(curl -s --request POST \
 CLIENT_TOKEN=$(echo "$TOKEN_RESPONSES" | jq -r '.auth.client_token')
 
 SECRET_RESPONSE=$(curl -s --header "X-Vault-Token: ${CLIENT_TOKEN}" \
-  --request GET https://vault.nansan.site/v1/kv/data/auth)
+  --request GET https://vault.nansan.site/v1/kv/data/authentication)
 
 RABBITMQ_DEFAULT_USER=$(echo "$SECRET_RESPONSE" | jq -r '.data.data.rabbitmq.username')
 RABBITMQ_DEFAULT_PASS=$(echo "$SECRET_RESPONSE" | jq -r '.data.data.rabbitmq.password')
@@ -53,10 +55,10 @@ log "Execute rabbitmq..."
 docker run -d \
   --name rabbitmq \
   --restart unless-stopped \
+  -v /var/rabbitmq:/var/lib/rabbitmq \
   -e RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER} \
   -e RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS} \
   -p 15672:15672 \
-  -v /var/rabbitmq:/var/lib/rabbitmq \
   --network nansan-network \
   rabbitmq:latest
 
