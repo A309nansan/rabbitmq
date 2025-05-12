@@ -28,7 +28,7 @@ fi
 
 # 실행중인 rabbitmq container 삭제
 log "rabbitmq container remove."
-docker rm -f rabbitmq:latest
+docker rm -f rabbitmq
 
 # 기존 rabbitmq 이미지를 삭제하고 새로 빌드
 log "rabbitmq image remove and build."
