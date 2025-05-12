@@ -59,6 +59,7 @@ docker run -d \
   -e RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER} \
   -e RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS} \
   -p 13120:15672 \
+  -p 13121:5672 \
   --network nansan-network \
   rabbitmq:latest
 
