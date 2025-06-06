@@ -56,9 +56,7 @@ docker run -d \
   --name rabbitmq \
   --restart unless-stopped \
   -v /var/rabbitmq:/var/lib/rabbitmq \
-  -v /etc/letsencrypt/live/nansan.site:/etc/letsencrypt/live/nansan.site:ro \
-  -v /etc/letsencrypt/archive/nansan.site:/etc/letsencrypt/archive/nansan.site:ro \
-  -v /opt/rabbitmq/ssl:/opt/rabbitmq/ssl:ro \
+  -v /etc/rabbitmq/certs:/etc/rabbitmq/certs:ro \
   -e RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER} \
   -e RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS} \
   -p 5671:5671 \
